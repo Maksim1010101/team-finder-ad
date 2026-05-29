@@ -9,7 +9,11 @@ SECRET_KEY = config("DJANGO_SECRET_KEY")
 
 DEBUG = config("DJANGO_DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in config("DJANGO_ALLOWED_HOSTS", default="*").split(",")
+    if host.strip()
+]
 
 AUTH_USER_MODEL = "users.User"
 # Application definition
