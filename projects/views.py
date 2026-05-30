@@ -1,19 +1,24 @@
-from django.shortcuts import get_object_or_404
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from http import HTTPStatus
+from core.constants import PAGE_SIZE
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from .models import Project
-from .forms import ProjectForm
+from django.views.decorators.http import require_http_methods
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from projects.forms import ProjectForm
+from projects.models import Project
 
 
 class ProjectListView(ListView):
     model = Project
     template_name = "projects/project_list.html"
-    paginate_by = 12
+    paginate_by = PAGE_SIZE
     ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related('participants', 'owner')
 
 
 class ProjectDetailsView(DetailView):
@@ -70,44 +75,36 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
 class FavoriteProjectsView(LoginRequiredMixin, ListView):
     model = Project
     template_name = "projects/favorite-projects.html"
-    paginate_by = 12
+    paginate_by = PAGE_SIZE
 
     def get_queryset(self):
-        return self.request.user.favorites.all().order_by("-created_at")
+        return self.request.user.favorites.all().prefetch_related(
+            'participants', 'owner'
+        ).annotate(
+            participants_count=Count('participants')
+        ).order_by('-created_at')
 
 
 @login_required
 @require_http_methods(["POST"])
 def toggle_favorite(request, pk):
     project = get_object_or_404(Project, pk=pk)
-    if project in request.user.favorites.all():
+    if (is_favorite := request.user.favorites.filter(pk=pk).exists()):
         request.user.favorites.remove(project)
-        favorited = False
     else:
         request.user.favorites.add(project)
-        favorited = True
-    return JsonResponse({"status": "ok", "favorited": favorited})
+    return JsonResponse({'status': 'ok', 'favorited': not is_favorite})
 
 
 @login_required
 @require_http_methods(["POST"])
 def toggle_participate(request, pk):
     project = get_object_or_404(Project, pk=pk)
-    user = request.user
-    is_participant = project.participants.filter(id=user.id).exists()
-    if is_participant:
-        project.participants.remove(user)
-        joined = False
+    if (is_participant := project.participants.filter(pk=request.user.pk).exists()):
+        project.participants.remove(request.user)
     else:
-        project.participants.add(user)
-        joined = True
-    return JsonResponse(
-        {
-            "status": "ok",
-            "joined": joined,
-            "participants_count": project.participants.count(),
-        }
-    )
+        project.participants.add(request.user)
+    return JsonResponse({'status': 'ok', 'joined': not is_participant})
 
 
 @login_required
@@ -116,12 +113,16 @@ def complete_project(request, pk):
     project = get_object_or_404(Project, pk=pk)
     if project.owner != request.user and not request.user.is_staff:
         return JsonResponse(
-            {"status": "error", "message": "Нет прав"},
-            status=403)
-    if project.status == "open":
-        project.status = "closed"
+            {'status': 'error', 'message': 'Нет прав'},
+            status=HTTPStatus.FORBIDDEN
+        )
+    if project.status == Project.OPEN:
+        project.status = Project.CLOSED
         project.save()
-        return JsonResponse({"status": "ok", "project_status": "closed"})
+        return JsonResponse(
+            {'status': 'ok', 'project_status': Project.CLOSED}
+        )
     return JsonResponse(
-        {"status": "error", "message": "Проект уже закрыт"},
-        status=400)
+        {'status': 'error', 'message': 'Проект уже закрыт'},
+        status=HTTPStatus.BAD_REQUEST
+    )

@@ -1,10 +1,11 @@
 from django import forms
-from django.core.exceptions import ValidationError
-from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import authenticate
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.password_validation import validate_password
-from .validators import validate_phone_number, validate_github_url
-from .models import User
+from django.core.exceptions import ValidationError
+
+from users.models import User
+from users.validators import validate_github_url, validate_phone_number
 
 
 class RegistrationForm(forms.ModelForm):

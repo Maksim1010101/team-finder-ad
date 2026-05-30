@@ -1,10 +1,20 @@
+from core.constants import MAX_PROJECT_LEN_NAME
+from django.contrib.auth import get_user_model
 from django.db import models
-from users.models import User
+
+User = get_user_model()
 
 
 class Project(models.Model):
-    STATUS_CHOICES = [("open", "Open"), ("closed", "Closed")]
-    name = models.CharField(max_length=200, verbose_name="Название проекта")
+    OPEN = "open"
+    CLOSED = "closed"
+
+    STATUS_CHOICES = [
+        (OPEN, "Open"),
+        (CLOSED, "Closed"),
+    ]
+    name = models.CharField(max_length=MAX_PROJECT_LEN_NAME,
+                            verbose_name="Название проекта")
     description = models.TextField(blank=True, verbose_name="Описание проекта")
     owner = models.ForeignKey(
         "users.User",

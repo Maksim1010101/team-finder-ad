@@ -1,15 +1,14 @@
-from django.shortcuts import render, redirect
-from django.views.generic import ListView, DetailView, UpdateView
-from django.urls import reverse, reverse_lazy
+from django.contrib.auth import login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
-from .forms import (RegistrationForm,
-                    LoginForm,
-                    UserEditForm,
-                    UserChangePasswordForm)
-from django.contrib.auth import login, logout
-from .models import User
+from django.shortcuts import redirect, render
+from django.urls import reverse, reverse_lazy
+from django.views.generic import DetailView, ListView, UpdateView
 from projects.models import Project
+
+from users.forms import (LoginForm, RegistrationForm, UserChangePasswordForm,
+                         UserEditForm)
+from users.models import User
 
 
 class UsersListView(ListView):
@@ -95,11 +94,10 @@ class UserEditView(LoginRequiredMixin, UpdateView):
     context_object_name = "user"
 
     def get_object(self, queryset=None):
-        # Возвращаем текущего пользователя
         return self.request.user
 
     def get_success_url(self):
-        return reverse_lazy("users:detail", kwargs={"pk": self.object.pk})
+        return reverse('users:detail', kwargs={'user_id': self.object.pk})
 
 
 class UserChangePasswordView(LoginRequiredMixin, PasswordChangeView):
