@@ -1,6 +1,7 @@
-from core.constants import MAX_PROJECT_LEN_NAME
 from django.contrib.auth import get_user_model
 from django.db import models
+
+from core.constants import MAX_PROJECT_LEN_NAME, MAX_STATUS_LEN
 
 User = get_user_model()
 
@@ -13,8 +14,9 @@ class Project(models.Model):
         (OPEN, "Open"),
         (CLOSED, "Closed"),
     ]
-    name = models.CharField(max_length=MAX_PROJECT_LEN_NAME,
-                            verbose_name="Название проекта")
+    name = models.CharField(
+        max_length=MAX_PROJECT_LEN_NAME, verbose_name="Название проекта"
+    )
     description = models.TextField(blank=True, verbose_name="Описание проекта")
     owner = models.ForeignKey(
         "users.User",
@@ -22,11 +24,10 @@ class Project(models.Model):
         related_name="owned_projects",
         verbose_name="Владелец проекта",
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name="Дата создания")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     github_url = models.URLField(blank=True, verbose_name="Ссылка на GitHub")
     status = models.CharField(
-        max_length=6,
+        max_length=MAX_STATUS_LEN,
         choices=STATUS_CHOICES,
         default=STATUS_CHOICES[0][0],
         verbose_name="Статус проекта",

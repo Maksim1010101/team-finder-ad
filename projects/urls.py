@@ -1,8 +1,15 @@
 from django.urls import path
-from projects.views import (CreateProjectView, FavoriteProjectsView,
-                            ProjectDetailsView, ProjectListView,
-                            ProjectUpdateView, complete_project,
-                            toggle_favorite, toggle_participate)
+
+from projects.views import (
+    CreateProjectView,
+    FavoriteProjectsView,
+    ProjectDetailsView,
+    ProjectListView,
+    ProjectUpdateView,
+    complete_project,
+    toggle_favorite,
+    toggle_participate,
+)
 
 app_name = "projects"
 

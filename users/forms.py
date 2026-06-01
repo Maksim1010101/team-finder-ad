@@ -51,8 +51,7 @@ class LoginForm(forms.Form):
 
 
 class UserEditForm(forms.ModelForm):
-    github_url = forms.URLField(
-        required=False, validators=[validate_github_url])
+    github_url = forms.URLField(required=False, validators=[validate_github_url])
     phone = forms.CharField(required=False, validators=[validate_phone_number])
 
     class Meta:

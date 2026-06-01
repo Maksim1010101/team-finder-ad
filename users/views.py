@@ -2,19 +2,24 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import PasswordChangeView
 from django.shortcuts import redirect, render
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
 from django.views.generic import DetailView, ListView, UpdateView
-from projects.models import Project
 
-from users.forms import (LoginForm, RegistrationForm, UserChangePasswordForm,
-                         UserEditForm)
+from core.constants import PAGE_SIZE
+from projects.models import Project
+from users.forms import (
+    LoginForm,
+    RegistrationForm,
+    UserChangePasswordForm,
+    UserEditForm,
+)
 from users.models import User
 
 
 class UsersListView(ListView):
     model = User
     template_name = "users/participants.html"
-    paginate_by = 12
+    paginate_by = PAGE_SIZE
     context_object_name = "participants"
 
     def get_queryset(self):
@@ -25,11 +30,9 @@ class UsersListView(ListView):
             user = self.request.user
             if filter_type == "owners-of-favorite-projects":
                 fav_projects = user.favorites.all()
-                qs = User.objects.filter(
-                    owned_projects__in=fav_projects).distinct()
+                qs = User.objects.filter(owned_projects__in=fav_projects).distinct()
             elif filter_type == "owners-of-participating-projects":
-                participated_projects = Project.objects.filter(
-                    participants=user)
+                participated_projects = Project.objects.filter(participants=user)
                 qs = User.objects.filter(
                     owned_projects__in=participated_projects
                 ).distinct()
@@ -97,7 +100,7 @@ class UserEditView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
     def get_success_url(self):
-        return reverse('users:detail', kwargs={'user_id': self.object.pk})
+        return reverse("users:detail", kwargs={"user_id": self.object.pk})
 
 
 class UserChangePasswordView(LoginRequiredMixin, PasswordChangeView):
